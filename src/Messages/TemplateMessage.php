@@ -65,21 +65,36 @@ class TemplateMessage extends WhatsappMessage
         return $this;
     }
 
-    public function header(?Header $header): static
+    public function header(Header|array|null $header): static
     {
-        $this->header = $header;
+        if (is_array($header)) {
+            $this->header = Header::create($header);
+        } else {
+            $this->header = $header;
+        }
+
         return $this;
     }
 
-    public function body(?Body $body): static
+    public function body(Body|array|null $body): static
     {
-        $this->body = $body;
+        if (is_array($body)) {
+            $this->body = Body::create($body);
+        } else {
+            $this->body = $body;
+        }
+
         return $this;
     }
 
-    public function footer(?Footer $footer): static
+    public function footer(Footer|array|null $footer): static
     {
-        $this->footer = $footer;
+        if (is_array($footer)) {
+            $this->footer = Footer::create($footer);
+        } else {
+            $this->footer = $footer;
+        }
+
         return $this;
     }
 
@@ -119,6 +134,7 @@ class TemplateMessage extends WhatsappMessage
                     ...$this->buttons
                 ])
                     ->whereNotNull()
+                    ->values()
                     ->toArray(),
             ],
         ];
