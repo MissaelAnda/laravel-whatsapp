@@ -13,6 +13,8 @@ class WhatsappServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->mergeConfigFrom(__DIR__ . '/../config/whatsapp.php', 'whatsapp');
+
         $this->app->singleton('whatsapp', fn () => new Whatsapp);
     }
 
