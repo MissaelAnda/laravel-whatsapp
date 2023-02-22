@@ -27,7 +27,7 @@ class Footer implements Message
     {
         return [
             'type' => 'footer',
-            'parameters' => $this->parameters,
+            'parameters' => array_map(fn ($param) => $param->toArray(), $this->parameters),
         ];
     }
 

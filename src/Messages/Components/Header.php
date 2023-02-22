@@ -27,7 +27,7 @@ class Header implements Message
     {
         return [
             'type' => 'header',
-            'parameters' => $this->parameters,
+            'parameters' => array_map(fn ($param) => $param->toArray(), $this->parameters),
         ];
     }
 

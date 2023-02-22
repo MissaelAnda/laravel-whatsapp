@@ -27,7 +27,7 @@ class Body implements Message
     {
         return [
             'type' => 'body',
-            'parameters' => $this->parameters,
+            'parameters' => array_map(fn ($param) => $param->toArray(), $this->parameters),
         ];
     }
 
