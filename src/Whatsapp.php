@@ -2,18 +2,20 @@
 
 namespace MissaelAnda\Whatsapp;
 
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use MissaelAnda\Whatsapp\Exceptions\MessageRequestException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use MissaelAnda\Whatsapp\Messages\WhatsappMessage;
 
 class Whatsapp
 {
     public const WHATSAPP_API_URL = 'https://graph.facebook.com/v{{VERSION}}';
-    public const WHATSAPP_MESSAGE_API = '{{NUMBER_ID}}/messages';
+    public const WHATSAPP_MESSAGE_API = 'messages';
     public const WHATSAPP_API_VERSION = '16.0';
 
     protected readonly string $numberId;
@@ -54,13 +56,111 @@ class Whatsapp
         return $this->numberId(config('whatsapp.default_number_id'));
     }
 
-    public function send(string|array $phones, WhatsappMessage $message)
+    /**
+     * @return MessageResponse|array<MessageResponse|MessageRequestException>
+     * 
+     * @throws MessageRequestException
+     */
+    public function send(string|array $phones, WhatsappMessage $message): MessageResponse|array
     {
         if (is_string($phones) || count($phones) === 1) {
             return $this->sendMessage(Arr::wrap($phones)[0], $message);
         } else {
             return $this->sendMassMessage($phones, $message);
         }
+    }
+
+    public function markRead(string $messageId): bool
+    {
+        $response = $this->request()->post($this->buildApiEndpoint('messages'), [
+            'messaging_product' => 'whatsapp',
+            'status' => 'read',
+            'message_id' => $messageId,
+        ]);
+
+        if (!$response->successful()) {
+            throw new MessageRequestException($response);
+        }
+
+        return $response->json('success');
+    }
+
+    public function uploadMedia(string $file, string $type = null, bool $retrieveAllData = true): WhatsappMedia|string
+    {
+        if ($type === null && !Storage::fileExists($file)) {
+            throw new FileNotFoundException("The file $file doesn't exists.");
+        }
+
+        $response = $this->request()
+            ->attach(
+                'file',
+                $type === null ? Storage::get($file) : $file,
+                $type === null ? $file : Str::random()
+            )
+            ->post($this->buildApiEndpoint('media'), [
+                'messaging_product' => 'whatsapp',
+                'type' => $type ?? Storage::mimeType($file),
+            ]);
+
+        if (!$response->successful()) {
+            throw new MessageRequestException($response);
+        }
+
+        $id = $response->json('id');
+
+        if ($retrieveAllData) {
+            return $this->getMedia($id);
+        }
+        return $id;
+    }
+
+    public function getMedia(string $mediaId): WhatsappMedia
+    {
+        $response = $this->request()->get($this->buildApiEndpoint($mediaId, false));
+
+        if (!$response->successful()) {
+            throw new MessageRequestException($response);
+        }
+
+        return new WhatsappMedia(
+            $response->json('id'),
+            $response->json('url'),
+            $response->json('mime_type'),
+            $response->json('sha256'),
+            $response->json('file_size'),
+        );
+    }
+
+    public function deleteMedia(WhatsappMedia|string $id): bool
+    {
+        if ($id instanceof WhatsappMedia) $id = $id->id;
+        $response = $this->request()->delete($this->buildApiEndpoint($id, false));
+
+        if (!$response->successful()) {
+            throw new MessageRequestException($response);
+        }
+
+        return $response->json('success');
+    }
+
+    public function downloadMedia(string|WhatsappMedia $media): string
+    {
+        if ($media instanceof WhatsappMedia) {
+            $url = $media->url;
+        } else {
+            if (filter_var($media, FILTER_VALIDATE_URL) === false) {
+                throw new \Exception("Expected media url.");
+            }
+            $url = $media;
+        }
+
+        $response = $this->request()->get($url);
+
+        if (!$response->successful()) {
+            throw new MessageRequestException($response);
+        }
+
+        return $response->body();
     }
 
     protected function sendMessage(string $phone, WhatsappMessage $message): MessageResponse
@@ -112,13 +212,11 @@ class Whatsapp
         return Http::acceptJson()->withToken($this->token);
     }
 
-    protected function buildApiEndpoint(string $for): string
+    protected function buildApiEndpoint(string $for, bool $withNumberId = true): string
     {
         return Str::of(static::WHATSAPP_API_URL)
             ->replace('{{VERSION}}', static::WHATSAPP_API_VERSION)
-            ->append('/', match ($for) {
-                'messages' => static::WHATSAPP_MESSAGE_API,
-            })
-            ->replace('{{NUMBER_ID}}', $this->numberId);
+            ->when($withNumberId, fn ($str) => $str->append('/', $this->numberId))
+            ->append('/', $for);
     }
 }

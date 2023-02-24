@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Facade;
  * @method static \MissaelAnda\Whatsapp\Whatsapp numberId(string $numberId)
  * @method static \MissaelAnda\Whatsapp\Whatsapp numberName(string $name)
  * @method static \MissaelAnda\Whatsapp\Whatsapp defaultNumber()
+ * @method static bool markRead(string $messageId)
+ * @method static \MissaelAnda\Whatsapp\WhatsappMedia|string uploadMedia(string $file, string $type = null, bool $retrieveAllData = true)
+ * @method static \MissaelAnda\Whatsapp\WhatsappMedia getMedia(string $mediaId)
+ * @method static bool deleteMedia(\MissaelAnda\Whatsapp\WhatsappMedia|string $id)
+ * @method static string downloadMedia(string|\MissaelAnda\Whatsapp\WhatsappMedia $media)
  */
 class Whatsapp extends Facade
 {
