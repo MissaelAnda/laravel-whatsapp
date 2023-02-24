@@ -5,6 +5,8 @@ A Laravel package for the [Whatsapp Business Cloud API](https://developers.faceb
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
+    - [Media](#media)
+    - [Business profile](#business-profile)
 - [Notification Channel](#notification-channel)
 - [License](#license)
 
@@ -77,6 +79,15 @@ Whatsapp::deleteMedia(\MissaelAnda\Whatsapp\WhatsappMedia|string $id): bool
 Whatsapp::downloadMedia(string|\MissaelAnda\Whatsapp\WhatsappMedia $media): string
 ```
 
+### Business Profile
+
+There are also two ways to manage the number's buisness profile:
+
+```php
+Whatsapp::getProfile(): \MissaelAnda\Whatsapp\BusinessProfile
+Whatsapp::updateProfile(\MissaelAnda\Whatsapp\BusinessProfile|array $data): bool
+```
+
 ## Notification Channel
 
 This library has support for channel notification, just add the `routeNotificationForWhatsapp()` function to the Notifiable user (it can return a single whatsapp_id or an array of them):
@@ -146,6 +157,10 @@ Now you can send whatsapp notifications:
 ```php
 $user->notify(new VerificationCode('12345678'));
 ```
+
+## Missing features
+
+- Register/deregister/validate new phone numbers
 
 ## License
 

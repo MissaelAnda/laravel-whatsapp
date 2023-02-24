@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static \MissaelAnda\Whatsapp\WhatsappMedia getMedia(string $mediaId)
  * @method static bool deleteMedia(\MissaelAnda\Whatsapp\WhatsappMedia|string $id)
  * @method static string downloadMedia(string|\MissaelAnda\Whatsapp\WhatsappMedia $media)
+ * @method static \MissaelAnda\Whatsapp\BusinessProfile getProfile()
+ * @method static bool updateProfile(array|\MissaelAnda\Whatsapp\BusinessProfile $data)
  */
 class Whatsapp extends Facade
 {

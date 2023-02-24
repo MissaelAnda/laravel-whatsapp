@@ -6,6 +6,7 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use MissaelAnda\Whatsapp\Exceptions\MessageRequestException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -72,15 +73,11 @@ class Whatsapp
 
     public function markRead(string $messageId): bool
     {
-        $response = $this->request()->post($this->buildApiEndpoint('messages'), [
+        $response = $this->sendRequest($this->buildApiEndpoint('messages'), 'post', [
             'messaging_product' => 'whatsapp',
             'status' => 'read',
             'message_id' => $messageId,
         ]);
-
-        if (!$response->successful()) {
-            throw new MessageRequestException($response);
-        }
 
         return $response->json('success');
     }
@@ -116,11 +113,7 @@ class Whatsapp
 
     public function getMedia(string $mediaId): WhatsappMedia
     {
-        $response = $this->request()->get($this->buildApiEndpoint($mediaId, false));
-
-        if (!$response->successful()) {
-            throw new MessageRequestException($response);
-        }
+        $response = $this->sendRequest($this->buildApiEndpoint($mediaId, false), 'get');
 
         return new WhatsappMedia(
             $response->json('id'),
@@ -134,11 +127,7 @@ class Whatsapp
     public function deleteMedia(WhatsappMedia|string $id): bool
     {
         if ($id instanceof WhatsappMedia) $id = $id->id;
-        $response = $this->request()->delete($this->buildApiEndpoint($id, false));
-
-        if (!$response->successful()) {
-            throw new MessageRequestException($response);
-        }
+        $response = $this->sendRequest($this->buildApiEndpoint($id, false), 'delete');
 
         return $response->json('success');
     }
@@ -154,18 +143,32 @@ class Whatsapp
             $url = $media;
         }
 
-        $response = $this->request()->get($url);
-
-        if (!$response->successful()) {
-            throw new MessageRequestException($response);
-        }
+        $response = $this->sendRequest($url, 'get');
 
         return $response->body();
     }
 
+    public function getProfile(): BusinessProfile
+    {
+        $response = $this->sendRequest($this->buildApiEndpoint('whatsapp_business_profile'), 'get');
+
+        return BusinessProfile::build($response->json('data'));
+    }
+
+    public function updateProfile(array|BusinessProfile $data): bool
+    {
+        $response = $this->sendRequest(
+            $this->buildApiEndpoint('whatsapp_business_profile'),
+            'post',
+            array_merge((array)$data, ['messaging_product' => 'whatsapp'])
+        );
+
+        return $response->json('success');
+    }
+
     protected function sendMessage(string $phone, WhatsappMessage $message): MessageResponse
     {
-        $response = $this->request()->post($this->buildApiEndpoint('messages'), $this->buildMessage($phone, $message));
+        $response = $this->sendRequest($this->buildApiEndpoint('messages'), 'post', $this->buildMessage($phone, $message));
 
         return MessageResponse::build($response);
     }
@@ -218,5 +221,17 @@ class Whatsapp
             ->replace('{{VERSION}}', static::WHATSAPP_API_VERSION)
             ->when($withNumberId, fn ($str) => $str->append('/', $this->numberId))
             ->append('/', $for);
+    }
+
+    protected function sendRequest(string $url, string $method, array $data = []): Response
+    {
+        /** @var Response */
+        $response = $this->request()->{strtolower($method)}($url, $data);
+
+        if (!$response->successful()) {
+            throw new MessageRequestException($response);
+        }
+
+        return $response;
     }
 }
