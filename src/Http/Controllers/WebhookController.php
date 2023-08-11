@@ -7,7 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
-use MissaelAnda\Whatsapp\Events\EntryBuilder;
+use MissaelAnda\Whatsapp\Events\SubscriptionIntentReceived;
+use MissaelAnda\Whatsapp\Events\SuccessfullySubscribed;
 use MissaelAnda\Whatsapp\Events\UnprocessableWebhookPayload;
 use MissaelAnda\Whatsapp\Events\WebhookEntry;
 use MissaelAnda\Whatsapp\Events\WebhookReceived;
@@ -33,6 +34,8 @@ class WebhookController extends Controller
     {
         $verificationCode = Config::get('whatsapp.webhook.verify_token');
 
+        SubscriptionIntentReceived::dispatch($request->ip(), $request->json());
+
         if (
             empty($verificationCode) ||
             empty($challenge = $request->input('hub_challenge')) ||
@@ -41,6 +44,8 @@ class WebhookController extends Controller
         ) {
             throw new AccessDeniedHttpException;
         }
+
+        SuccessfullySubscribed::dispatch($request->ip(), $request->json());
 
         return new Response($challenge);
     }
