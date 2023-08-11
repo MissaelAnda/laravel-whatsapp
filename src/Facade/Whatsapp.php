@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static array send(string|array<string> $phones, \MissaelAnda\Whatsapp\WhatsappMessage $message)
+ * @method static \MissaelAnda\Whatsapp\Whatsapp client(string $numberId, string $token)
+ * @method static \MissaelAnda\Whatsapp\Whatsapp token(string $token)
  * @method static \MissaelAnda\Whatsapp\Whatsapp numberId(string $numberId)
  * @method static \MissaelAnda\Whatsapp\Whatsapp numberName(string $name)
  * @method static \MissaelAnda\Whatsapp\Whatsapp defaultNumber()
