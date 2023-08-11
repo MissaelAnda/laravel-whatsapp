@@ -2,6 +2,7 @@
 
 namespace MissaelAnda\Whatsapp;
 
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider;
 
 class WhatsappServiceProvider extends ServiceProvider
@@ -15,7 +16,10 @@ class WhatsappServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/whatsapp.php', 'whatsapp');
 
-        $this->app->singleton('whatsapp', fn () => new Whatsapp);
+        $this->app->singleton('whatsapp', fn () => new Whatsapp(
+            Config::get('whatsapp.default_number_id'),
+            Config::get('whatsapp.token')
+        ));
     }
 
     /**

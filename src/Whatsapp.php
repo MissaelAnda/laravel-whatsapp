@@ -3,58 +3,77 @@
 namespace MissaelAnda\Whatsapp;
 
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
-use MissaelAnda\Whatsapp\Exceptions\MessageRequestException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use MissaelAnda\Whatsapp\Exceptions\MessageRequestException;
+use MissaelAnda\Whatsapp\Exceptions\MediaNotFoundException;
+use MissaelAnda\Whatsapp\Exceptions\PhoneNumberNameNotFound;
 use MissaelAnda\Whatsapp\Messages\WhatsappMessage;
 
 class Whatsapp
 {
     public const WHATSAPP_API_URL = 'https://graph.facebook.com/v{{VERSION}}';
     public const WHATSAPP_MESSAGE_API = 'messages';
-    public const WHATSAPP_API_VERSION = '16.0';
+    public const WHATSAPP_API_VERSION = '17.0';
 
-    protected readonly string $numberId;
-    protected readonly string $token;
+    public function __construct(
+        protected readonly ?string $numberId,
+        protected readonly ?string $token,
+    ) {
+        // 
+    }
 
-    public function __construct(string $numberId = null, string $token = null)
+    public function client(string $numberId, string $token): static
     {
-        $this->token = $token ?? config('whatsapp.token');
-        $this->numberId = $numberId ?? config('whatsapp.default_number_id');
+        if (empty($numberId)) {
+            throw new \Exception('Invalid number ID provided.');
+        }
+
+        if (empty($token)) {
+            throw new \Exception('Invalid token provided.');
+        }
+
+        return new static($numberId, $token);
     }
 
     public function numberId(string $numberId): static
     {
         if (empty($numberId)) {
-            throw new \Exception("Invalid number ID provided.");
+            throw new \Exception('Invalid number ID provided.');
         }
 
-        return new static($numberId);
+        return new static($numberId, $this->token);
     }
 
     public function token(string $token): static
     {
         if (empty($token)) {
-            throw new \Exception("Invalid token provided.");
+            throw new \Exception('Invalid token provided.');
         }
 
-        return new static(null, $token);
+        return new static($this->numberId, $token);
     }
 
     public function numberName(string $name): static
     {
-        $phone = config("whatsapp.phones.$name");
-        return $this->numberId($phone);
+        $phone = Config::get("whatsapp.phones.$name");
+
+        if ($phone === null) {
+            throw new PhoneNumberNameNotFound($name);
+        }
+
+        return $this->numberId($phone, $this->token);
     }
 
     public function defaultNumber(): static
     {
-        return $this->numberId(config('whatsapp.default_number_id'));
+        return $this->numberId(Config::get('whatsapp.default_number_id'));
     }
 
     /**
@@ -111,17 +130,23 @@ class Whatsapp
         return $id;
     }
 
-    public function getMedia(string $mediaId): WhatsappMedia
+    public function getMedia(string $mediaId, bool $download = false): WhatsappMedia
     {
         $response = $this->sendRequest($this->buildApiEndpoint($mediaId, false), 'get');
 
-        return new WhatsappMedia(
+        $media = new WhatsappMedia(
             $response->json('id'),
             $response->json('url'),
             $response->json('mime_type'),
             $response->json('sha256'),
             $response->json('file_size'),
         );
+
+        if ($download) {
+            $media->download();
+        }
+
+        return $media;
     }
 
     public function deleteMedia(WhatsappMedia|string $id): bool
@@ -132,7 +157,10 @@ class Whatsapp
         return $response->json('success');
     }
 
-    public function downloadMedia(string|WhatsappMedia $media): string
+    /**
+     * @throws MediaNotFoundException
+     */
+    public function downloadMedia(string|WhatsappMedia $media): WhatsappMedia
     {
         if ($media instanceof WhatsappMedia) {
             $url = $media->url;
@@ -143,9 +171,30 @@ class Whatsapp
             $url = $media;
         }
 
-        $response = $this->sendRequest($url, 'get');
+        if (empty($url)) {
+            throw new \InvalidArgumentException('The url can not be empty.');
+        }
 
-        return $response->body();
+        $response = Http::withToken($this->token)->get($url);
+
+        if (!$response->ok()) {
+            throw new MediaNotFoundException($url);
+        }
+
+        if ($media instanceof WhatsappMedia) {
+            $media->source = $response->body();
+        } else {
+            $media = new WhatsappMedia(
+                null,
+                $url,
+                $response->header('Content-Type'),
+                null,
+                $response->header('Content-Length'),
+                $response->body(),
+            );
+        }
+
+        return $media;
     }
 
     public function getProfile(): BusinessProfile

@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Facade;
  * @method static \MissaelAnda\Whatsapp\Whatsapp defaultNumber()
  * @method static bool markRead(string $messageId)
  * @method static \MissaelAnda\Whatsapp\WhatsappMedia|string uploadMedia(string $file, string $type = null, bool $retrieveAllData = true)
- * @method static \MissaelAnda\Whatsapp\WhatsappMedia getMedia(string $mediaId)
+ * @method static \MissaelAnda\Whatsapp\WhatsappMedia getMedia(string $mediaId, bool $download = false)
  * @method static bool deleteMedia(\MissaelAnda\Whatsapp\WhatsappMedia|string $id)
- * @method static string downloadMedia(string|\MissaelAnda\Whatsapp\WhatsappMedia $media)
+ * @method static \MissaelAnda\Whatsapp\WhatsappMedia downloadMedia(string|\MissaelAnda\Whatsapp\WhatsappMedia $media)
  * @method static \MissaelAnda\Whatsapp\BusinessProfile getProfile()
  * @method static bool updateProfile(array|\MissaelAnda\Whatsapp\BusinessProfile $data)
  */
