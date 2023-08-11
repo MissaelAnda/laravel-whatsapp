@@ -3,6 +3,7 @@
 namespace MissaelAnda\Whatsapp;
 
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class WhatsappServiceProvider extends ServiceProvider
@@ -29,8 +30,38 @@ class WhatsappServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->publishes([
-            __DIR__ . '/../config/whatsapp.php' => $this->app->configPath('whatsapp.php'),
-        ], 'config');
+        $this->registerPublishing();
+        $this->registerRoutes();
+    }
+
+    /**
+     * Register the package routes.
+     *
+     * @return void
+     */
+    protected function registerRoutes()
+    {
+        if (Config::get('whatsapp.webhook.enabled')) {
+            Route::group([
+                'prefix' => Config::get('whatsapp.webhook.path'),
+                'as' => 'whatsapp.',
+            ], function () {
+                $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+            });
+        }
+    }
+
+    /**
+     * Register the package's publishable resources.
+     *
+     * @return void
+     */
+    protected function registerPublishing()
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../config/whatsapp.php' => $this->app->configPath('whatsapp.php'),
+            ], 'config');
+        }
     }
 }
