@@ -15,6 +15,7 @@ use MissaelAnda\Whatsapp\Events\WebhookReceived;
 use MissaelAnda\Whatsapp\Exceptions\InvalidWebhookEntryException;
 use MissaelAnda\Whatsapp\Utils;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class WebhookController extends Controller
 {
@@ -55,7 +56,11 @@ class WebhookController extends Controller
      */
     public function handle(Request $request)
     {
-        $payload = $request->json();
+        if (!$request->isJson()) {
+            throw new BadRequestHttpException('Request must be a valid json.');
+        }
+
+        $payload = json_decode($request->getContent(), true);
 
         WebhookReceived::dispatch($payload);
 
@@ -81,7 +86,7 @@ class WebhookController extends Controller
             foreach (Utils::extract($entry, 'changes') as $change) {
                 [$type, $data] = Utils::extract($change, ['field', 'value']);
 
-                WebhookEntry::build($accountId, $type, $data)->dispatch();
+                event(WebhookEntry::build($accountId, $type, $data));
             }
         }
     }
