@@ -8,12 +8,6 @@ use Illuminate\Support\Carbon;
  * The message object. For more information check the docs.
  * @link https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks/components#messages-object
  *
- * @property ?string $caption [video] The caption for the video, if provided.
- * @property ?string $filename [video] The name for the file on the sender's device.
- * @property ?string $sha256 [video] The hash for the video.
- * @property ?string $id [video] The ID for the video.
- * @property ?string $mime_type [video] The mime type for the video file.
- *
  * @property ?string $body [text] The text of the message.
  *
  * @property ?string $body [system] Describes the change to the customer's identity or phone number.
@@ -25,12 +19,12 @@ use Illuminate\Support\Carbon;
  * - customer_identity_changed – A customer changed their profile information.
  * @property ?string $customer [system] The WhatsApp ID for the customer prior to the update.
  *
- * @property ?string $mime_type [sticker|image|document|audio] The attachment mimetype.
- * @property ?string $sha256 [sticker|image|document] Hash for the sticker.
- * @property ?string $id [sticker|image|document|audio] ID for the sticker.
+ * @property ?string $mime_type [sticker|image|document|audio|video] The attachment mimetype.
+ * @property ?string $sha256 [sticker|image|document|video] Hash for the sticker.
+ * @property ?string $id [sticker|image|document|audio|video] ID for the sticker.
  * @property ?bool $animated [sticker] Set to true if the sticker is animated; false otherwise.
- * @property ?string $caption [image|document] Caption for the image, if provided.
- * @property ?string $filename [document] Name for the file on the sender's device.
+ * @property ?string $caption [image|document|videdo] Caption for the image, if provided.
+ * @property ?string $filename [document|video] Name for the file on the sender's device.
  *
  * @property ?string $source_url [referral] The Meta URL that leads to the ad or post clicked by the customer. Opening this url takes you to the ad viewed by your customer.
  * @property ?string $source_type [referral] The type of the ad’s source; ad or post.
@@ -62,8 +56,8 @@ use Illuminate\Support\Carbon;
  * @property ?string $acknowledged [string] State of acknowledgment for the messages system customer_identity_changed.
  * @property ?string $created_timestamp [string] The time when the WhatsApp Business Management API detected the customer may have changed their profile information.
  * @property ?string $hash [string] The ID for the messages system customer_identity_changed
- * 
- * 
+ *
+ *
  * @property ?bool $forwarded [context] Set to true if the message received by the business has been forwarded.
  * @property ?bool $frequently_forwarded [context] Set to true if the message received by the business has been forwarded more than 5 times.
  * @property ?string $from [context] The WhatsApp ID for the customer who replied to an inbound message.
@@ -84,7 +78,7 @@ class Message
         public string $type,
         public array $data,
     ) {
-        // 
+        //
     }
 
     public function __get($name)
