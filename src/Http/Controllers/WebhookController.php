@@ -35,7 +35,7 @@ class WebhookController extends Controller
     {
         $verificationCode = Config::get('whatsapp.webhook.verify_token');
 
-        SubscriptionIntentReceived::dispatch($request->ip(), json_decode($request->getContent(), true));
+        SubscriptionIntentReceived::dispatch($request->ip(), $data = json_decode($request->getContent(), true));
 
         if (
             empty($verificationCode) ||
@@ -46,7 +46,7 @@ class WebhookController extends Controller
             throw new AccessDeniedHttpException;
         }
 
-        SuccessfullySubscribed::dispatch($request->ip(), $request->json());
+        SuccessfullySubscribed::dispatch($request->ip(), $data);
 
         return new Response($challenge);
     }
