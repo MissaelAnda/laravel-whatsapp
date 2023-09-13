@@ -57,15 +57,6 @@ use Illuminate\Support\Carbon;
  * @property ?string $created_timestamp [string] The time when the WhatsApp Business Management API detected the customer may have changed their profile information.
  * @property ?string $hash [string] The ID for the messages system customer_identity_changed
  *
- *
- * @property ?bool $forwarded [context] Set to true if the message received by the business has been forwarded.
- * @property ?bool $frequently_forwarded [context] Set to true if the message received by the business has been forwarded more than 5 times.
- * @property ?string $from [context] The WhatsApp ID for the customer who replied to an inbound message.
- * @property ?string $id [context] The message ID for the sent message for an inbound reply.
- * @property ?array $referred_product [context] Referred product object describing the product the user is requesting information about. You must parse this value if you support Product Enquiry Messages. See Receive Response From Customers. Referred product objects have the following properties:
- *                       - catalog_id — String. Unique identifier of the Meta catalog linked to the WhatsApp Business Account.
- *                       - product_retailer_id — String. Unique identifier of the product in a catalog.
- *
  * @property ?string $payload [button] The payload for a button set up by the business that a customer clicked as part of an interactive message.
  * @property ?string $text [button] Button text.
  */
@@ -76,7 +67,9 @@ class Message
         public string $from,
         public Carbon $timestamp,
         public string $type,
-        public array $data,
+        public ?MessageContext $context,
+        public array $data = [],
+        public array $errors = [],
     ) {
         //
     }

@@ -6,6 +6,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use MissaelAnda\Whatsapp\Events\Metadata\Contact;
 use MissaelAnda\Whatsapp\Events\Metadata\Message;
+use MissaelAnda\Whatsapp\Events\Metadata\MessageContext;
+use MissaelAnda\Whatsapp\Events\Metadata\MessageError;
 use MissaelAnda\Whatsapp\Utils;
 
 class MessagesReceived extends WebhookEntry
@@ -48,7 +50,9 @@ class MessagesReceived extends WebhookEntry
             Utils::extract($message, 'from'),
             Carbon::createFromTimestamp(Utils::extract($message, 'timestamp')),
             $type = Utils::extract($message, 'type'),
+            MessageContext::fromPayload($message),
             Utils::extract($message, $type),
+            MessageError::fromPayload($message),
         ));
     }
 }
