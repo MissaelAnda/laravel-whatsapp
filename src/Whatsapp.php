@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use MissaelAnda\Whatsapp\Events\SendingMessage;
 use MissaelAnda\Whatsapp\Exceptions\MessageRequestException;
 use MissaelAnda\Whatsapp\Exceptions\MediaNotFoundException;
 use MissaelAnda\Whatsapp\Exceptions\PhoneNumberNameNotFound;
@@ -83,6 +84,12 @@ class Whatsapp
      */
     public function send(string|array $phones, WhatsappMessage $message): MessageResponse|array
     {
+        if (empty($this->numberId)) {
+            throw new \Exception('The number id is required.');
+        }
+
+        SendingMessage::dispatch($this->numberId, (array)$phones, $message);
+
         if (is_string($phones) || count($phones) === 1) {
             return $this->sendMessage(Arr::wrap($phones)[0], $message);
         } else {
