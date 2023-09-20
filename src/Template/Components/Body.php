@@ -8,6 +8,11 @@ class Body extends Component
 
     public array $examples;
 
+    /**
+     * Only for Authentication templates
+     */
+    public ?bool $addSecurityRecommendation = null;
+
     public function text(string $text): static
     {
         $this->text = $text;
@@ -20,15 +25,25 @@ class Body extends Component
         return $this;
     }
 
+    public function addSecurityRecommendation(?bool $addSecurityRecommendation): static
+    {
+        $this->addSecurityRecommendation = $addSecurityRecommendation;
+        return $this;
+    }
+
     public function toArray()
     {
         $data = [
             'type' => $this->type(),
-            'text' => $this->text,
         ];
 
-        if (count($this->examples)) {
-            $data['examples'] = ['body_text' => [$this->examples]];
+        if ($this->addSecurityRecommendation !== null) {
+            $data['add_security_recommendation'] = $this->addSecurityRecommendation;
+        } else {
+            $data['text'] = $this->text;
+            if (count($this->examples)) {
+                $data['examples'] = ['body_text' => [$this->examples]];
+            }
         }
 
         return $data;

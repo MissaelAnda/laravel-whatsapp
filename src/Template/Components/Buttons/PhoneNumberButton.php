@@ -6,7 +6,19 @@ class PhoneNumberButton extends BaseButton
 {
     const MAX_PHONE_NUMBER_LENGTH = 20;
 
+    public string $text;
+
     public string $phoneNumber;
+
+    public function text(string $text): static
+    {
+        if (strlen($text) > $max = static::MAX_TEXT_LENGTH) {
+            throw new \InvalidArgumentException("Text must be $max characters maximum.");
+        }
+
+        $this->text = $text;
+        return $this;
+    }
 
     public function phoneNumber(string $phoneNumber): static
     {
@@ -21,7 +33,8 @@ class PhoneNumberButton extends BaseButton
     public function toArray()
     {
         return [
-            ...parent::toArray(),
+            'type' => $this->type(),
+            'text' => $this->text,
             'phone_number' => $this->phoneNumber,
         ];
     }

@@ -4,9 +4,8 @@ namespace MissaelAnda\Whatsapp\Template\Components\Buttons;
 
 use MissaelAnda\Whatsapp\WhatsappData;
 
-class CopyCodeButton extends WhatsappData
+class CopyCodeButton extends BaseButton
 {
-    const TYPE = 'COPY_CODE';
     const MAX_LENGTH = 15;
 
     public string $example;
@@ -24,7 +23,7 @@ class CopyCodeButton extends WhatsappData
     public function toArray()
     {
         return [
-            'type' => static::TYPE,
+            'type' => $this->type(),
             'example' => $this->example,
         ];
     }

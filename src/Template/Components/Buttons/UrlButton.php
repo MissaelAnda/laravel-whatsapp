@@ -4,9 +4,21 @@ namespace MissaelAnda\Whatsapp\Template\Components\Buttons;
 
 class UrlButton extends BaseButton
 {
+    public string $text;
+
     public string $url;
 
     public ?string $example;
+
+    public function text(string $text): static
+    {
+        if (strlen($text) > $max = static::MAX_TEXT_LENGTH) {
+            throw new \InvalidArgumentException("Text must be $max characters maximum.");
+        }
+
+        $this->text = $text;
+        return $this;
+    }
 
     public function url(string $url): static
     {
@@ -23,7 +35,8 @@ class UrlButton extends BaseButton
     public function toArray()
     {
         $data = [
-            ...parent::toArray(),
+            'type' => $this->type(),
+            'text' => $this->text,
             'url' => $this->url,
         ];
 

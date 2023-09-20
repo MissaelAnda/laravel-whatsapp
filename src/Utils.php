@@ -20,4 +20,19 @@ abstract class Utils
 
         return count($results) === 1 ? $results[0] : $results;
     }
+
+    public static function fill(array &$array, string|array $path, mixed $value = null, bool $ignoreNull = false): void
+    {
+        if (!is_array($path)) {
+            if ($ignoreNull && $value === null) {
+                return;
+            }
+
+            Arr::set($array, $path, $value);
+        } else {
+            foreach ($path as $currentPath => $value) {
+                static::fill($array, $currentPath, $value, $ignoreNull);
+            }
+        }
+    }
 }

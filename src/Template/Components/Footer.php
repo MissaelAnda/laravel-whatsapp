@@ -2,13 +2,14 @@
 
 namespace MissaelAnda\Whatsapp\Template\Components;
 
-use MissaelAnda\Whatsapp\WhatsappData;
-
-class Footer extends WhatsappData
+class Footer extends Component
 {
-    const TYPE = 'FOOTER';
-
     public string $text;
+
+    /**
+     * Only for Authentication templates
+     */
+    public ?int $codeExpirationMinutes = null;
 
     public function text(string $text): static
     {
@@ -16,11 +17,28 @@ class Footer extends WhatsappData
         return $this;
     }
 
+    public function codeExpirationMinutes(?int $minutes): static
+    {
+        if ($minutes !== null && ($minutes < 1 || $minutes > 90)) {
+            throw new \InvalidArgumentException('The code expiration must be between 1 and 90.');
+        }
+
+        $this->codeExpirationMinutes = $minutes;
+        return $this;
+    }
+
     public function toArray()
     {
-        return [
-            'type' => static::TYPE,
-            'text' => $this->text,
+        $data = [
+            'type' => $this->type(),
         ];
+
+        if ($this->codeExpirationMinutes !== null) {
+            $data['code_expiration_minutes'] = $this->codeExpirationMinutes;
+        } else {
+            $data['text'] = $this->text;
+        }
+
+        return $data;
     }
 }
