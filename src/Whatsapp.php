@@ -16,6 +16,7 @@ use MissaelAnda\Whatsapp\Exceptions\MessageRequestException;
 use MissaelAnda\Whatsapp\Exceptions\MediaNotFoundException;
 use MissaelAnda\Whatsapp\Exceptions\PhoneNumberNameNotFound;
 use MissaelAnda\Whatsapp\Messages\WhatsappMessage;
+use MissaelAnda\Whatsapp\Template\MessageTemplate;
 
 class Whatsapp
 {
@@ -26,21 +27,18 @@ class Whatsapp
     public function __construct(
         protected readonly ?string $numberId,
         protected readonly ?string $token,
+        protected readonly ?string $accountId,
     ) {
         // 
     }
 
     public function client(string $numberId, string $token): static
     {
-        if (empty($numberId)) {
-            throw new \Exception('Invalid number ID provided.');
-        }
-
         if (empty($token)) {
             throw new \Exception('Invalid token provided.');
         }
 
-        return new static($numberId, $token);
+        return new static($numberId, $token, $this->accountId);
     }
 
     public function numberId(string $numberId): static
@@ -49,7 +47,7 @@ class Whatsapp
             throw new \Exception('Invalid number ID provided.');
         }
 
-        return new static($numberId, $this->token);
+        return new static($numberId, $this->token, $this->accountId);
     }
 
     public function token(string $token): static
@@ -58,7 +56,12 @@ class Whatsapp
             throw new \Exception('Invalid token provided.');
         }
 
-        return new static($this->numberId, $token);
+        return new static($this->numberId, $token, $this->accountId);
+    }
+
+    public function accountId(string $accountId): static
+    {
+        return new static($this->numberId, $this->token, $accountId);
     }
 
     public function numberName(string $name): static
@@ -77,35 +80,34 @@ class Whatsapp
         return $this->numberId(Config::get('whatsapp.default_number_id'));
     }
 
-    /**
-     * @return MessageResponse|array<MessageResponse|MessageRequestException>
-     * 
-     * @throws MessageRequestException
-     */
-    public function send(string|array $phones, WhatsappMessage $message): MessageResponse|array
+    public function createTemplate(MessageTemplate $template)
     {
-        if (empty($this->numberId)) {
-            throw new \Exception('The number id is required.');
-        }
-
-        SendingMessage::dispatch($this->numberId, (array)$phones, $message);
-
-        if (is_string($phones) || count($phones) === 1) {
-            return $this->sendMessage(Arr::wrap($phones)[0], $message);
-        } else {
-            return $this->sendMassMessage($phones, $message);
-        }
+        $this->sendRequest($this->buildAccountEndpoint('message_templates'), 'post', $template->toArray());
     }
 
-    public function markRead(string $messageId): bool
+    public function getTemplate(int $id)
     {
-        $response = $this->sendRequest($this->buildApiEndpoint('messages'), 'post', [
-            'messaging_product' => 'whatsapp',
-            'status' => 'read',
-            'message_id' => $messageId,
-        ]);
+        return $this->sendRequest($this->buildApiEndpoint($id), 'get')->json();
+    }
 
-        return $response->json('success');
+    public function getTemplates(?int $limit = null): array
+    {
+        if ($limit !== null && $limit <= 0) {
+            throw new \InvalidArgumentException('limit must be bigger than 0.');
+        }
+
+        $data = [];
+        if ($limit !== null) {
+            $data['limit'] = $limit;
+        }
+
+        $response = $this->sendRequest(
+            $this->buildAccountEndpoint('message_templates'),
+            'get',
+            $limit === null ? [] : compact('limit')
+        );
+
+        return $response->json();
     }
 
     public function uploadMedia(string $file, string $type = null, bool $retrieveAllData = true): WhatsappMedia|string
@@ -139,7 +141,7 @@ class Whatsapp
 
     public function getMedia(string $mediaId, bool $download = false): WhatsappMedia
     {
-        $response = $this->sendRequest($this->buildApiEndpoint($mediaId, false), 'get');
+        $response = $this->sendRequest($this->buildApiEndpoint($mediaId), 'get');
 
         $media = new WhatsappMedia(
             $response->json('id'),
@@ -159,7 +161,7 @@ class Whatsapp
     public function deleteMedia(WhatsappMedia|string $id): bool
     {
         if ($id instanceof WhatsappMedia) $id = $id->id;
-        $response = $this->sendRequest($this->buildApiEndpoint($id, false), 'delete');
+        $response = $this->sendRequest($this->buildApiEndpoint($id), 'delete');
 
         return $response->json('success');
     }
@@ -222,9 +224,40 @@ class Whatsapp
         return $response->json('success');
     }
 
+    /**
+     * @return MessageResponse|array<MessageResponse|MessageRequestException>
+     * 
+     * @throws MessageRequestException
+     */
+    public function send(string|array $phones, WhatsappMessage $message): MessageResponse|array
+    {
+        if (empty($this->numberId)) {
+            throw new \Exception('The number id is required.');
+        }
+
+        SendingMessage::dispatch($this->numberId, (array)$phones, $message);
+
+        if (is_string($phones) || count($phones) === 1) {
+            return $this->sendMessage(Arr::wrap($phones)[0], $message);
+        } else {
+            return $this->sendMassMessage($phones, $message);
+        }
+    }
+
+    public function markRead(string $messageId): bool
+    {
+        $response = $this->sendRequest($this->buildNumberEndpoint('messages'), 'post', [
+            'messaging_product' => 'whatsapp',
+            'status' => 'read',
+            'message_id' => $messageId,
+        ]);
+
+        return $response->json('success');
+    }
+
     protected function sendMessage(string $phone, WhatsappMessage $message): MessageResponse
     {
-        $response = $this->sendRequest($this->buildApiEndpoint('messages'), 'post', $this->buildMessage($phone, $message));
+        $response = $this->sendRequest($this->buildNumberEndpoint('messages'), 'post', $this->buildMessage($phone, $message));
 
         return MessageResponse::build($response);
     }
@@ -236,7 +269,7 @@ class Whatsapp
     protected function sendMassMessage(array $phones, WhatsappMessage $message)
     {
         collect($this->request()->pool(function (Pool $pool) use ($phones, $message) {
-            $url = $this->buildApiEndpoint('messages');
+            $url = $this->buildNumberEndpoint('messages');
 
             foreach ($phones as $phone) {
                 $pool->post($url, $this->buildMessage($phone, $message));
@@ -271,11 +304,29 @@ class Whatsapp
         return Http::acceptJson()->withToken($this->token);
     }
 
-    protected function buildApiEndpoint(string $for, bool $withNumberId = true): string
+    protected function buildNumberEndpoint(string $for): string
+    {
+        if (empty($this->numberId)) {
+            throw new \Exception('The number ID is required.');
+        }
+
+        return $this->buildApiEndpoint($for, $this->numberId);
+    }
+
+    protected function buildAccountEndpoint(string $for): string
+    {
+        if (empty($this->accountId)) {
+            throw new \Exception('The account ID is required.');
+        }
+
+        return $this->buildApiEndpoint($for, $this->accountId);
+    }
+
+    protected function buildApiEndpoint(string $for, ?string $resourceId = null): string
     {
         return Str::of(static::WHATSAPP_API_URL)
             ->replace('{{VERSION}}', static::WHATSAPP_API_VERSION)
-            ->when($withNumberId, fn ($str) => $str->append('/', $this->numberId))
+            ->when($resourceId, fn ($str) => $str->append('/', $resourceId))
             ->append('/', $for);
     }
 

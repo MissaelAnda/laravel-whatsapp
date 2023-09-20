@@ -19,7 +19,8 @@ class WhatsappServiceProvider extends ServiceProvider
 
         $this->app->singleton('whatsapp', fn () => new Whatsapp(
             Config::get('whatsapp.default_number_id'),
-            Config::get('whatsapp.token')
+            Config::get('whatsapp.token'),
+            Config::get('whatsapp.account_id'),
         ));
     }
 

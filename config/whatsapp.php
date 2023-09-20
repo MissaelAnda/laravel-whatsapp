@@ -7,14 +7,19 @@ return [
     'token' => env('WHATSAPP_TOKEN'),
 
     /**
-     * The whatsapp's app secret code. Required for webhook request signature verification.
+     * The whatsapp's account ID.
      */
-    'secret' => env('WHATSAPP_SECRET'),
+    'account_id' => env('WHATSAPP_ACCOUNT_ID'),
 
     /**
      * The default NUMBER ID used to send the messages.
      */
     'default_number_id' => env('WHATSAPP_NUMBER_ID'),
+
+    /**
+     * The whatsapp's app secret code. Required for webhook request signature verification.
+     */
+    'secret' => env('WHATSAPP_SECRET'),
 
     /**
      * If you want to use other number id's you can add them here so you can call
