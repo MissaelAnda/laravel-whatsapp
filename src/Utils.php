@@ -7,11 +7,11 @@ use MissaelAnda\Whatsapp\Exceptions\MalformedPayloadException;
 
 abstract class Utils
 {
-    public static function extract(array $payload, string|array $path): mixed
+    public static function extract(array $payload, string|array $path, bool $throw = true): mixed
     {
         $results = [];
         foreach ((array)$path as $p) {
-            if (!Arr::has($payload, $p)) {
+            if (!Arr::has($payload, $p) && $throw) {
                 throw new MalformedPayloadException($p);
             }
 

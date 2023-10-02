@@ -8,6 +8,7 @@ use MissaelAnda\Whatsapp\Events\Metadata\Contact;
 use MissaelAnda\Whatsapp\Events\Metadata\Message;
 use MissaelAnda\Whatsapp\Events\Metadata\MessageContext;
 use MissaelAnda\Whatsapp\Events\Metadata\MessageError;
+use MissaelAnda\Whatsapp\Events\Metadata\Status;
 use MissaelAnda\Whatsapp\Utils;
 
 class MessagesReceived extends WebhookEntry
@@ -25,6 +26,11 @@ class MessagesReceived extends WebhookEntry
      */
     public Collection $messages;
 
+    /**
+     * @var Collection<Status>
+     */
+    public Collection $statuses;
+
     protected function afterBuild()
     {
         $this->phoneNumberId = Utils::extract($this->data, 'metadata.phone_number_id');
@@ -33,11 +39,27 @@ class MessagesReceived extends WebhookEntry
 
         $this->buildContacts();
         $this->buildMessages();
+        $this->buildStatuses();
+    }
+
+    protected function buildStatuses()
+    {
+        $this->statuses = collect(Utils::extract($this->data, 'statuses', false))->map(fn ($status) => new Status(
+            Utils::extract($status, 'id'),
+            Utils::extract($status, 'status'),
+            Carbon::createFromTimestamp(Utils::extract($status, 'timestamp')),
+            Utils::extract($status, 'recipient_id'),
+            Utils::extract($status, 'conversation.id'),
+            Utils::extract($status, 'conversation.origin.type'),
+            Utils::extract($status, 'pricing.billable'),
+            Utils::extract($status, 'pricing.pricing_model'),
+            Utils::extract($status, 'pricing.category'),
+        ));
     }
 
     protected function buildContacts()
     {
-        $this->contacts = collect(Utils::extract($this->data, 'contacts'))->map(fn ($contact) => new Contact(
+        $this->contacts = collect(Utils::extract($this->data, 'contacts', false))->map(fn ($contact) => new Contact(
             Utils::extract($contact, 'wa_id'),
             Utils::extract($contact, 'profile.name')
         ));
@@ -45,7 +67,7 @@ class MessagesReceived extends WebhookEntry
 
     protected function buildMessages()
     {
-        $this->messages = collect(Utils::extract($this->data, 'messages'))->map(fn ($message) => new Message(
+        $this->messages = collect(Utils::extract($this->data, 'messages', false))->map(fn ($message) => new Message(
             Utils::extract($message, 'id'),
             Utils::extract($message, 'from'),
             Carbon::createFromTimestamp(Utils::extract($message, 'timestamp')),
