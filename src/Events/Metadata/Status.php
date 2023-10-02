@@ -11,11 +11,11 @@ class Status
         public string $status,
         public Carbon $timestamp,
         public string $recipientId,
-        public string $conversationId,
-        public string $conversationType,
-        public bool $billable,
-        public string $pricingModel,
-        public string $pricingCategory,
+        public ?string $conversationId = null,
+        public ?string $conversationType = null,
+        public ?bool $billable = null,
+        public ?string $pricingModel = null,
+        public ?string $pricingCategory = null,
     ) {
         // 
     }

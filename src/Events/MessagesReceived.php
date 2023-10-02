@@ -49,11 +49,11 @@ class MessagesReceived extends WebhookEntry
             Utils::extract($status, 'status'),
             Carbon::createFromTimestamp(Utils::extract($status, 'timestamp')),
             Utils::extract($status, 'recipient_id'),
-            Utils::extract($status, 'conversation.id'),
-            Utils::extract($status, 'conversation.origin.type'),
-            Utils::extract($status, 'pricing.billable'),
-            Utils::extract($status, 'pricing.pricing_model'),
-            Utils::extract($status, 'pricing.category'),
+            Utils::extract($status, 'conversation.id', false),
+            Utils::extract($status, 'conversation.origin.type', false),
+            Utils::extract($status, 'pricing.billable', false),
+            Utils::extract($status, 'pricing.pricing_model', false),
+            Utils::extract($status, 'pricing.category', false),
         ));
     }
 
