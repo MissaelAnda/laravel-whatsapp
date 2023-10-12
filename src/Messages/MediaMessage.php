@@ -6,7 +6,7 @@ use MissaelAnda\Whatsapp\Messages\Enums\MediaType;
 
 class MediaMessage extends WhatsappMessage
 {
-    public const TYPE = 'text';
+    public const TYPE = 'media';
 
     public static function create(
         MediaType $type = MediaType::Image,
