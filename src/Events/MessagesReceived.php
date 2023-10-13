@@ -5,6 +5,7 @@ namespace MissaelAnda\Whatsapp\Events;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use MissaelAnda\Whatsapp\Events\Metadata\Contact;
+use MissaelAnda\Whatsapp\Events\Metadata\Error;
 use MissaelAnda\Whatsapp\Events\Metadata\Message;
 use MissaelAnda\Whatsapp\Events\Metadata\MessageContext;
 use MissaelAnda\Whatsapp\Events\Metadata\MessageError;
@@ -54,6 +55,13 @@ class MessagesReceived extends WebhookEntry
             Utils::extract($status, 'pricing.billable', false),
             Utils::extract($status, 'pricing.pricing_model', false),
             Utils::extract($status, 'pricing.category', false),
+            collect(Utils::extract($status, 'errors', false))->map(fn ($error) => new Error(
+                Utils::extract($error, 'code'),
+                Utils::extract($error, 'title'),
+                Utils::extract($error, 'message', false) ?: null,
+                Utils::extract($error, 'error_data.details', false) ?: null,
+                $error,
+            ))->all(),
         ));
     }
 

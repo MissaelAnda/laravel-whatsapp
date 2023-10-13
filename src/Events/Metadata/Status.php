@@ -6,6 +6,9 @@ use Illuminate\Support\Carbon;
 
 class Status
 {
+    /**
+     * @param  Error[] $errors
+     */
     public function __construct(
         public string $wamId,
         public string $status,
@@ -16,6 +19,7 @@ class Status
         public ?bool $billable = null,
         public ?string $pricingModel = null,
         public ?string $pricingCategory = null,
+        public array $errors = [],
     ) {
         // 
     }
