@@ -17,10 +17,10 @@ class Button implements Message
     }
 
     public function __construct(
-        public ButtonType $type,
+        public ButtonType $type = ButtonType::Url,
         public int $index = 0,
-        public string|array|null $payload,
-        public ?string $text,
+        public string|array|null $payload = null,
+        public ?string $text = null,
     ) {
         //
     }
