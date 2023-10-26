@@ -52,6 +52,8 @@ class MessagesReceived extends WebhookEntry
             Utils::extract($status, 'recipient_id'),
             Utils::extract($status, 'conversation.id', false),
             Utils::extract($status, 'conversation.origin.type', false),
+            ($expiration = Utils::extract($status, 'conversation.expiration_timestamp', false)) !== null ?
+                Carbon::createFromTimestamp($expiration) : null,
             Utils::extract($status, 'pricing.billable', false),
             Utils::extract($status, 'pricing.pricing_model', false),
             Utils::extract($status, 'pricing.category', false),

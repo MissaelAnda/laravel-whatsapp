@@ -16,6 +16,7 @@ class Status
         public string $recipientId,
         public ?string $conversationId = null,
         public ?string $conversationType = null,
+        public ?Carbon $conversationExpiration = null,
         public ?bool $billable = null,
         public ?string $pricingModel = null,
         public ?string $pricingCategory = null,
