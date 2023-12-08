@@ -13,6 +13,7 @@ use MissaelAnda\Whatsapp\Events\UnprocessableWebhookPayload;
 use MissaelAnda\Whatsapp\Events\WebhookEntry;
 use MissaelAnda\Whatsapp\Events\WebhookReceived;
 use MissaelAnda\Whatsapp\Exceptions\InvalidWebhookEntryException;
+use MissaelAnda\Whatsapp\Exceptions\MalformedPayloadException;
 use MissaelAnda\Whatsapp\Utils;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -71,7 +72,7 @@ class WebhookController extends Controller
             }
 
             $this->dispatchEntries($payload);
-        } catch (\Exception $e) {
+        } catch (MalformedPayloadException $e) {
             UnprocessableWebhookPayload::dispatch($e);
         }
 
