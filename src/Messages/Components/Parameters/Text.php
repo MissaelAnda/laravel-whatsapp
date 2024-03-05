@@ -27,7 +27,7 @@ class Text implements Message
     {
         return [
             'type' => 'text',
-            'text' => $this->text,
+            'text' => str_replace(["\n", "\t", "\r"], ['\n', '\t', '\r'], $this->text),
         ];
     }
 
